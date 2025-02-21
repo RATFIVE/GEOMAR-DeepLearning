@@ -15,7 +15,7 @@ class OpenMeteoWeather:
 
         # Setup the Open-Meteo API client with cache and retry on error
         cache_session = requests_cache.CachedSession('.cache', expire_after=3600)
-        retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
+        retry_session = retry(cache_session, retries=5, backoff_factor=1.0)
         self.openmeteo = openmeteo_requests.Client(session=retry_session)
 
     # def fetch_weather_data(self, archive=False):
@@ -52,8 +52,8 @@ class OpenMeteoWeather:
     def fetch_weather_data(self):
         # Define base parameters
         params = {
-            "latitude": self.latitude,
-            "longitude": self.longitude,
+            "latitude": ",".join(str(lat) for lat in self.latitude),
+            "longitude": ",".join(str(lon) for lon in self.longitude),
             "hourly": [
                 "temperature_2m", "relative_humidity_2m", "dew_point_2m", "apparent_temperature", 
                 "precipitation_probability", "precipitation", "rain", "showers", "snowfall", "snow_depth",
