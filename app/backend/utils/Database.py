@@ -44,9 +44,9 @@ class Database():
 
         return latest_data
     
-    def get_all_data(self):
+    def get_all_data(self, key):
 
-        data = list(self.collection.find().sort('date_published', -1))
+        data = list(self.collection.find().sort(key, -1))
         return data
 
     def upload_one(self, data):
@@ -54,9 +54,10 @@ class Database():
         self.collection.insert_one(data)
         print("Data uploaded successfully!")
     
-    def upload_many(self, data):
+    def upload_many(self, data:list):
         # some database upload logic
         self.collection.insert_many(data)
+        print("Upload Many Data successfully!")
 
     def get_null_data(self, key):
         null_data = list(self.collection.find({key: None}))
