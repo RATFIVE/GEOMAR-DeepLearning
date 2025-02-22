@@ -49,15 +49,17 @@ class Database():
         data = list(self.collection.find().sort(key, -1))
         return data
 
-    def upload_one(self, data):
+    def upload_one(self, data, verbose=False):
         # some database upload logic
         self.collection.insert_one(data)
-        print("Data uploaded successfully!")
+        if verbose:
+            print("Data uploaded successfully!")
     
-    def upload_many(self, data:list):
+    def upload_many(self, data:list, verbose=False):
         # some database upload logic
         self.collection.insert_many(data)
-        print("Upload Many Data successfully!")
+        if verbose:
+            print("Upload Many Data successfully!")
 
     def get_null_data(self, key):
         null_data = list(self.collection.find({key: None}))
