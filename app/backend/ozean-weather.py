@@ -36,9 +36,10 @@ MAXIMUM_LATIDUDE=54.52976525577923
 
 OUTPUT_FILENAME:str = "output.nc"
 
-DB_URL = 'localhost'
+#DB_URL = 'localhost'
+DB_URL = 'host.docker.internal'
 DB_NAME = 'deep-learning'
-DB_COLLECTION = 'ozean-weather'
+DB_COLLECTION = 'ozean-weather-data'
 
 
 
@@ -123,7 +124,7 @@ def upload_article_if_new(db_data, not_db_data):
     return True
 
 
-print("Parsing data to upload to Database...\n")
+print("\nParsing data to upload to Database...\n")
 for idx, (time, latitude, longitude) in enumerate(tqdm(zip(df_copernicus['time'], df_copernicus['latitude'], df_copernicus['longitude']), desc='Processing data', total=len(df_copernicus))):
 
     # bring time to isoformat
