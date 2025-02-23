@@ -38,7 +38,8 @@ class Database():
     
     def upload_many(self, data:list, verbose=False):
         # some database upload logic
-        self.collection.insert_many(data)
+        if data:
+            self.collection.insert_many(data)
         if verbose:
             print("Upload Many Data successfully!")
 
