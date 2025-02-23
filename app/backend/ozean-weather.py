@@ -60,7 +60,7 @@ def process_dataframe(df:pd.DataFrame) -> pd.DataFrame:
 
 
 # ------------ Get data from AdvancedCopernicus ------------
-print("Getting data from AdvancedCopernicus...\n")
+print("\nGetting data from AdvancedCopernicus...\n")
 copernicus_data = AdvancedCopernicus.get_subset(
                 dataset_id="cmems_mod_bal_phy_anfc_PT1H-i",
                 dataset_version="202411",
