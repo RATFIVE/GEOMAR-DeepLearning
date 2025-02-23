@@ -1,24 +1,5 @@
-import requests
-from bs4 import BeautifulSoup
-import pandas as pd
-import re
-from datetime import datetime
-from ftfy import fix_text
-import json
-from tqdm import tqdm 
-import os
-from dotenv import load_dotenv
 import pymongo
-from pymongo import MongoClient
-from pprint import pprint
-import time
 import pandas as pd
-from deep_translator import GoogleTranslator, DeeplTranslator, LibreTranslator, MyMemoryTranslator
-
-import nltk
-from nltk.sentiment.vader import SentimentIntensityAnalyzer
-import subprocess
-import sys
 
 
 
