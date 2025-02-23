@@ -15,8 +15,8 @@ ABSOLUTE_END_DATE:str = datetime.datetime.now().isoformat().split("T")[0]
 START_DATE:str = "2025-01-01"
 END_DATE:str = "2025-02-1"
 
-DB_URL = 'localhost'
-#DB_URL = 'host.docker.internal'
+#DB_URL = 'localhost'
+DB_URL = 'host.docker.internal'
 DB_NAME = 'deep-learning'
 DB_COLLECTION = 'planet-data'
 
