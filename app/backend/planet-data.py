@@ -15,8 +15,8 @@ ABSOLUTE_END_DATE:str = datetime.datetime.now().isoformat().split("T")[0]
 START_DATE:str = "2025-01-01"
 END_DATE:str = "2025-02-1"
 
-#DB_URL = 'localhost'
-DB_URL = 'host.docker.internal'
+DB_URL = 'localhost'
+#DB_URL = 'host.docker.internal'
 DB_NAME = 'deep-learning'
 DB_COLLECTION = 'planet-data'
 
@@ -90,27 +90,30 @@ def upload_article_if_new(db_data, not_db_data):
 
 
 print("\nParsing data to upload to Database...\n")
-
+db = Database(
+    db_url=DB_URL,
+    db_name=DB_NAME,
+    collection_name=DB_COLLECTION
+    )
 # upload to database
 df_json = df_planet.to_json(orient='records')
 df_json = json.loads(df_json)
+upload_list = []
 for item in tqdm(df_json, desc="Uploading data to Database", total=len(df_json)):
     item["time"] = pd.to_datetime(item["time"], unit='ms')
 
 
-    db = Database(
-        db_url=DB_URL,
-        db_name=DB_NAME,
-        collection_name=DB_COLLECTION
-        )
 
-    db_data_all = db.get_all_data(key="time")
-    if upload_article_if_new(db_data_all, item) == False:
-        continue
 
-    db.upload_one(item)
+    # db_data_all = db.get_all_data(key="time")
+    # if upload_article_if_new(db_data_all, item) == False:
+    #     continue
+    upload_list.append(item)
+    # db.upload_one(item)
     #print(f"Data for {item['planet']} at {item['time']} uploaded to Database successfully!\n")
-    db.close_connection()
+
+db.upload_many(upload_list)
+db.close_connection()
 
 print("Data uploaded to Database successfully!\n")
 print("Finished!\n")
