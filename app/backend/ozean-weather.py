@@ -36,10 +36,11 @@ MAXIMUM_LATIDUDE=54.52976525577923
 
 OUTPUT_FILENAME:str = "output.nc"
 
-#DB_URL = 'localhost'
-DB_URL = 'host.docker.internal'
+DB_URL = 'localhost'
+#DB_URL = 'host.docker.internal'
 DB_NAME = 'deep-learning'
-DB_COLLECTION = 'ozean-weather-data'
+#DB_COLLECTION = 'ozean-weather-data'
+DB_COLLECTION = 'test'
 
 
 
@@ -55,7 +56,7 @@ def process_dataframe(df:pd.DataFrame) -> pd.DataFrame:
         df[column] = df[column].astype(np.float32)  # Konvertiere alle Float-Typen zu float32
     df["latitude"] = df["latitude"].astype(np.float32).round(6)
     df["longitude"] = df["longitude"].astype(np.float32).round(6)
-    df['time'] = pd.to_datetime(df['time']).dt.tz_localize(None)
+    df['time'] = pd.to_datetime(df['time']).dt.tz_localize(None).dt.round('h')
 
     return df
 
@@ -110,7 +111,7 @@ if db_data_all:
     # Filtere Zeilen, die in df_db existieren
     db_tuples = set(zip(df_db["time"], df_db["latitude"], df_db["longitude"]))
     df_copernicus = df_copernicus[~df_copernicus.apply(lambda row: (row["time"], row["latitude"], row["longitude"]) in db_tuples, axis=1)]
-
+    print(f'Reduced data {len(df_copernicus)}')
 
 
 # Helper Function
@@ -144,26 +145,30 @@ for idx, (time, latitude, longitude) in enumerate(tqdm(zip(df_copernicus['time']
     
     df_merged = pd.merge(df_copernicus, df_openweather, on=['time', 'latitude', 'longitude'], how='inner')
     df_merged = process_dataframe(df_merged)
-    
+    print(df_merged.info())
+    print(df_merged.head())
+    #break
+
     # upload to database
     df_json = df_merged.to_json(orient='records')
     df_json = json.loads(df_json)
+
+    db = Database(
+        db_url=DB_URL,
+        db_name=DB_NAME,
+        collection_name=DB_COLLECTION
+        )
+    upload_list = []
     for item in df_json:
         item["time"] = pd.to_datetime(item["time"], unit='ms')
-
-
-        db = Database(
-            db_url=DB_URL,
-            db_name=DB_NAME,
-            collection_name=DB_COLLECTION
-            )
 
         db_data_all = db.get_all_data(key="time")
         if upload_article_if_new(db_data_all, item) == False:
             continue
+        upload_list.append(item)
 
-        db.upload_one(item)
-        db.close_connection()
+    db.upload_many(upload_list)
+    db.close_connection()
 
 print("Data uploaded to Database successfully!\n")
 print("Finished!\n")
