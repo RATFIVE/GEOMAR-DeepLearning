@@ -6,40 +6,51 @@ import numpy as np
 import datetime
 import json
 from tqdm import tqdm
+import os
+import json
+from dotenv import load_dotenv
 
 # ------------ Initialize Global Variables ------------
 ABSOLUTE_END_DATE = datetime.datetime.now().strftime("%Y-%m-%d")
 
-START_DATE = "2025-01-01"
-END_DATE = "2025-02-01"
+# .env-Datei laden
+load_dotenv()
 
-# Define bounding box for data retrieval
-BBOX = {
-    "min_lon": 10.038345850696412,
-    "max_lon": 10.365962458698567,
-    "min_lat": 54.27381478077755,
-    "max_lat": 54.52976525577923
-}
+# Werte abrufen
+ABSOLUTE_END_DATE = os.getenv("ABSOLUTE_END_DATE")  # als String
+START_DATE = os.getenv("START_DATE")
+END_DATE = os.getenv("END_DATE")
 
-OUTPUT_FILENAME = "output.nc"
+# JSON-String in ein Dictionary umwandeln
+BBOX = json.loads(os.getenv("BBOX"))
+
+OUTPUT_FILENAME = os.getenv("OUTPUT_FILENAME")
+COORDINATE_ROUNDING = int(os.getenv("COORDINATE_ROUNDING"))
 
 DB_CONFIG = {
-    "url": "localhost",
-    "name": "deep-learning",
-    "collection": "test"
+    "url": os.getenv("DB_URL"),
+    "name": os.getenv("DB_NAME"),
+    "collection": os.getenv("DB_COLLECTION_OCEAN_WEATHER")
 }
+### Display Settings ###
+print("\n\n")
+print(ABSOLUTE_END_DATE, START_DATE, END_DATE)
+print(json.dumps(BBOX, indent=4))
+print(json.dumps(DB_CONFIG, indent=4))
+print("\n\n")
 
+#latitude
 # ------------ Helper Functions ------------
 def process_dataframe(df: pd.DataFrame, convert_time: bool = False) -> pd.DataFrame:
     """Converts float columns to float32 and rounds latitude/longitude for consistency."""
     float_cols = df.select_dtypes(include=["float"]).columns
     df[float_cols] = df[float_cols].astype(np.float32)
 
-    df["latitude"] = df["latitude"].astype(np.float32).round(6)
-    df["longitude"] = df["longitude"].astype(np.float32).round(6)
+    df["latitude"] = df["latitude"].round(COORDINATE_ROUNDING)
+    df["longitude"] = df["longitude"].round(COORDINATE_ROUNDING)
 
-    if convert_time and not np.issubdtype(df['time'].dtype, np.datetime64):
-        df["time"] = pd.to_datetime(df["time"])
+    if convert_time:
+        df["time"] = pd.to_datetime(df["time"]).dt.tz_localize(None).dt.round("h")
 
     return df
 
@@ -98,12 +109,13 @@ print(f"\nUnique locations: {len(lat_lon_list)}, Unique times: {len(unique_times
 
 db = Database(db_url=DB_CONFIG["url"], db_name=DB_CONFIG["name"], collection_name=DB_CONFIG["collection"])
 
-for i in tqdm(range(0, len(unique_times), 10), desc="Uploading data to the database", total=len(unique_times) // 10):
+NUM_BATCHES = 30
+for i in tqdm(range(0, len(unique_times), NUM_BATCHES), desc="\nUploading data to the database", total=len(unique_times) // NUM_BATCHES):
     time = unique_times[i]
     time_str = time.strftime("%Y-%m-%d")
 
-    lat_subset = latitudes[:i + 10]
-    lon_subset = longitudes[:i + 10]
+    lat_subset = latitudes[:i + NUM_BATCHES]
+    lon_subset = longitudes[:i + NUM_BATCHES]
 
     
 
@@ -118,9 +130,9 @@ for i in tqdm(range(0, len(unique_times), 10), desc="Uploading data to the datab
     df_openweather = process_dataframe(df_openweather, convert_time=True)
 
     df_merged = pd.merge(df_copernicus, df_openweather, on=["time", "latitude", "longitude"], how="inner")
-
     if not df_merged.empty:
         db.upload_many(df_merged.to_dict(orient="records"))
-        print(f"Uploaded {len(df_merged)} records to the database")
-    #break
+        print(f"Uploaded {len(df_merged)} records to the database\n")
+    # if i >= 10:
+    #     break
 db.close_connection()
