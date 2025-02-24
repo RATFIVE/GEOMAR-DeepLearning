@@ -12,3 +12,4 @@ astroquery
 pytz
 astropy
 fastapi
+dotenv
