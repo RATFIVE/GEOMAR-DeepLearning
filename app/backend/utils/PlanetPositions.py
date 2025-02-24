@@ -33,8 +33,10 @@ class PlanetPositions:
             berlin_tz = pytz.timezone("Europe/Berlin")
             self.df_all["datetime"] = self.df_all["datetime_utc"].apply(lambda dt: berlin_tz.fromutc(dt))
             
+            # Entfernen der Zeitzone
+            self.df_all["datetime"] = self.df_all["datetime"].dt.tz_localize(None)
             # Entfernen unnötiger Spalten
-            self.df_all.drop(columns=["datetime_utc", "datetime_jd"], inplace=True)
+            self.df_all.drop(columns=["datetime_jd"], inplace=True)
         else:
             raise ValueError("Daten wurden noch nicht geladen. Rufe fetch_data() zuerst auf.")
     
