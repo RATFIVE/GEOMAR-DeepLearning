@@ -4,7 +4,7 @@ import pandas as pd
 from retry_requests import retry
 from datetime import datetime, timedelta
 from tqdm import tqdm
-
+import time
 
 class OpenMeteoWeather:
     def __init__(self, latitudes:list, longitudes:list, start_date:str, end_date:str):
@@ -20,7 +20,7 @@ class OpenMeteoWeather:
                               status_to_retry=(500, 502, 503, 504, 400, 429))
         self.openmeteo = openmeteo_requests.Client(session=retry_session)
     
-    def fetch_weather_data(self):
+    def fetch_weather_data(self, waittime=0.5):
         all_data = []
         today = datetime.today().date()
         start_date = datetime.strptime(self.start_date, "%Y-%m-%d").date()
@@ -53,6 +53,7 @@ class OpenMeteoWeather:
                 archive_url = "https://archive-api.open-meteo.com/v1/archive"
                 archive_response = self.openmeteo.weather_api(archive_url, params=archive_params)
                 all_data.extend([(lat, lon, r) for r in archive_response])
+                time.sleep(waittime)  # Pause nach der Anfrage
                 
             if end_date >= today:
                 forecast_params = params.copy()
@@ -61,7 +62,7 @@ class OpenMeteoWeather:
                 forecast_url = "https://api.open-meteo.com/v1/forecast"
                 forecast_response = self.openmeteo.weather_api(forecast_url, params=forecast_params)
                 all_data.extend([(lat, lon, r) for r in forecast_response])
-
+                time.sleep(waittime)
         return self.process_weather_data(all_data)
     
     def process_weather_data(self, data_responses):
