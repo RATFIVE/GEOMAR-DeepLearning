@@ -15,9 +15,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # COPY all python files
-COPY ozean-weather.py .
+COPY ocean-weather.py .
 
 
 
 # Command to run the script
-CMD ["python", "ozean-weather.py"]
+CMD ["python", "ocean-weather.py"]
