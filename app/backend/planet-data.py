@@ -7,31 +7,53 @@ import datetime
 from tqdm import tqdm
 import json
 
+import os
+import json
+from dotenv import load_dotenv
 
-# Define Absolute maximum and minimum values for date and location
-ABSOLUTE_END_DATE:str = datetime.datetime.now().isoformat().split("T")[0]
+# ------------ Initialize Global Variables ------------
+ABSOLUTE_END_DATE = datetime.datetime.now().strftime("%Y-%m-%d")
 
+# .env-Datei laden
+load_dotenv()
 
-START_DATE:str = "2025-01-01"
-END_DATE:str = "2025-02-1"
+# Werte abrufen
+ABSOLUTE_END_DATE = os.getenv("ABSOLUTE_END_DATE")  # als String
+START_DATE = os.getenv("START_DATE")
+END_DATE = os.getenv("END_DATE")
 
-DB_URL = 'localhost'
-#DB_URL = 'host.docker.internal'
-DB_NAME = 'deep-learning'
-DB_COLLECTION = 'planet-data'
+# JSON-String in ein Dictionary umwandeln
+BBOX = json.loads(os.getenv("BBOX"))
+
+OUTPUT_FILENAME = os.getenv("OUTPUT_FILENAME")
+COORDINATE_ROUNDING = int(os.getenv("COORDINATE_ROUNDING"))
+
+DB_CONFIG = {
+    "url": os.getenv("DB_URL"),
+    "name": os.getenv("DB_NAME"),
+    "collection": os.getenv("DB_COLLECTION_PLANET")
+}
+
+### Display Settings ###
+print("\n\n")
+print(ABSOLUTE_END_DATE, START_DATE, END_DATE)
+print(json.dumps(BBOX, indent=4))
+print(json.dumps(DB_CONFIG, indent=4))
+print("\n\n")
+
 
 
 
 # ------------ Helper Functions ------------
 
-def process_dataframe(df:pd.DataFrame) -> pd.DataFrame:
-    for column in df.select_dtypes(include=["float"]).columns:
-        df[column] = df[column].astype(np.float32)  # Konvertiere alle Float-Typen zu float32
-    df['time'] = pd.to_datetime(df['time'], unit='s', format='ISO8601').dt.tz_localize(None).dt.round('h')
-# df['time'] = pd.to_datetime(df['time'])
+def process_dataframe(df: pd.DataFrame, convert_time: bool = False) -> pd.DataFrame:
+    """Converts float columns to float32 for consistency."""
+    float_cols = df.select_dtypes(include=["float"]).columns
+    df[float_cols] = df[float_cols].astype(np.float32)
 
-# # Runde auf die nächste Stunde
-# df['time'] = df['time'].dt.round('h')
+    if convert_time:
+        df["time"] = pd.to_datetime(df["time"]).dt.tz_localize(None).dt.round("h")
+
     return df
 
 
@@ -52,14 +74,14 @@ df_planet = df_planet.drop(columns=['datetime_str', 'planet']).rename(columns={'
 # put time column to the first position
 df_planet = df_planet[['time'] + [col for col in df_planet.columns if col != 'time']]
 
-df_planet = process_dataframe(df_planet)
+df_planet = process_dataframe(df_planet, convert_time=True)
 
 
 
 db = Database(
-    db_url=DB_URL,
-    db_name=DB_NAME,
-    collection_name=DB_COLLECTION
+    db_url=DB_CONFIG["url"],
+    db_name=DB_CONFIG["name"],
+    collection_name=DB_CONFIG["collection"]
     )
     
 
@@ -67,55 +89,36 @@ db_data_all = db.get_all_data(key="time")
 db.close_connection()
 
 if db_data_all:
-    df_db = pd.DataFrame(db_data_all).drop(columns=['_id']).loc[:, ['time', 'planet']]
+    df_db = pd.DataFrame(db_data_all).drop(columns=["_id"])[["time", "planet"]]
+    df_db = process_dataframe(df_db, convert_time=True)
+    len_before = len(df_planet)
+    # Use a performant merge operation instead of looping
+    df_planet = df_planet.merge(df_db, on=["time", "planet"], how="left", indicator=True)
+    df_planet = df_planet[df_planet["_merge"] == "left_only"].drop(columns=["_merge"])
+    len_after = len(df_planet)
+    print(f"\nRemoved {len_before - len_after} existing records from the Copernicus data")
+    print(f"Reduced data: {len(df_planet)} rows\n")
 
-    df_db = process_dataframe(df_db)
-
-    # Filtere Zeilen, die in df_db existieren
-    db_tuples = set(zip(df_db["time"], df_db["planet"]))
-    df_planet = df_planet[~df_planet.apply(lambda row: (row["time"], row["planet"]) in db_tuples, axis=1)]
-
-
-
-
-# Helper Function
-def upload_article_if_new(db_data, not_db_data):
-    # Check if the article is already in the database
-    for doc in db_data:
-        if (doc.get('time') == not_db_data.get('time')) and (doc.get('planet') == not_db_data.get('planet')):
-            #print('Data already in the database, skipping upload...\n')
-            return False
-        
-    return True
 
 
 print("\nParsing data to upload to Database...\n")
 db = Database(
-    db_url=DB_URL,
-    db_name=DB_NAME,
-    collection_name=DB_COLLECTION
+    db_url=DB_CONFIG["url"],
+    db_name=DB_CONFIG["name"],
+    collection_name=DB_CONFIG["collection"]
     )
-# upload to database
-df_json = df_planet.to_json(orient='records')
-df_json = json.loads(df_json)
-upload_list = []
-for item in tqdm(df_json, desc="Uploading data to Database", total=len(df_json)):
-    item["time"] = pd.to_datetime(item["time"], unit='ms')
 
+df_planet = process_dataframe(df_planet, convert_time=True)
+#print(df_planet[['datetime_utc', 'time']].head())
+if not df_planet.empty:
+    db.upload_many(df_planet.to_dict(orient="records"))
+    print(f"Uploaded {len(df_planet)} records to the database")
+else:
+    print("No data to upload to database")
 
-
-
-    # db_data_all = db.get_all_data(key="time")
-    # if upload_article_if_new(db_data_all, item) == False:
-    #     continue
-    upload_list.append(item)
-    # db.upload_one(item)
-    #print(f"Data for {item['planet']} at {item['time']} uploaded to Database successfully!\n")
-
-db.upload_many(upload_list)
 db.close_connection()
 
-print("Data uploaded to Database successfully!\n")
+
 print("Finished!\n")
 
 
