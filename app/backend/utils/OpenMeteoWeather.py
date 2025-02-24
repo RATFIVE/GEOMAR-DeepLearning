@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 
 class OpenMeteoWeather:
-    def __init__(self, latitudes, longitudes, start_date, end_date):
+    def __init__(self, latitudes:list, longitudes:list, start_date:str, end_date:str):
         # Initialize parameters
         self.latitudes = latitudes
         self.longitudes = longitudes
