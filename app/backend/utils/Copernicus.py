@@ -25,7 +25,8 @@ class AdvancedCopernicus:
                    disable_progress_bar: bool = False, 
                    username: str = 'mbanzhaf', 
                    password: str = '6bF$ebvr',
-                   output_filename: str = 'output.nc'
+                   output_filename: str = 'output.nc',
+                   delete_file=True,
                    ):
         # Fetch subset data and save to output_filename
         self.client.subset(
@@ -44,20 +45,23 @@ class AdvancedCopernicus:
             disable_progress_bar=disable_progress_bar,
             username=username,
             password=password,
-            output_filename=output_filename
+            output_filename=output_filename,
+            
         )
         # Load the downloaded NetCDF file into an xarray Dataset
         data = xr.open_dataset(output_filename)
-        self.delete_dataset(output_filename)
+
+        if delete_file:
+            self.delete_dataset(output_filename)
         return data
         
     
     def delete_dataset(self, file_name):
-        #os.remove(file_name)
+        os.remove(file_name)
         #delete all file with .nc extension
-        for file in os.listdir():
-            if file.endswith(".nc"):
-                os.remove(file)
+        # for file in os.listdir():
+        #     if file.endswith(".nc"):
+        #         os.remove(file)
         
 
 
