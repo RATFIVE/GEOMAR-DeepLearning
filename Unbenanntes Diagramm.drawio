@@ -100,14 +100,20 @@
         <mxCell id="i4DyHIZpNscy4BL_6yOO-40" value="weather data" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
           <mxGeometry x="485.5" y="39.5" width="129" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="i4DyHIZpNscy4BL_6yOO-41" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-          <mxGeometry x="340" y="390" width="120" height="60" as="geometry" />
-        </mxCell>
         <mxCell id="i4DyHIZpNscy4BL_6yOO-42" value="Shape: (time, lat, lon, features)" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
           <mxGeometry x="100" y="230" width="220" height="30" as="geometry" />
         </mxCell>
         <mxCell id="i4DyHIZpNscy4BL_6yOO-43" value="Shape: (time, lat, lon, features)" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
           <mxGeometry x="470" y="230" width="220" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="i4DyHIZpNscy4BL_6yOO-46" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="i4DyHIZpNscy4BL_6yOO-44" target="i4DyHIZpNscy4BL_6yOO-45">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="i4DyHIZpNscy4BL_6yOO-44" value="Input" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="330" y="360" width="100" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="i4DyHIZpNscy4BL_6yOO-45" value="" style="rounded=1;whiteSpace=wrap;html=1;arcSize=14;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="320" y="560" width="120" height="60" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
