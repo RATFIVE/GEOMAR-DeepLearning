@@ -15,7 +15,7 @@ output-2023-01-01-1.075874074001014.nc.json
 output-2024-01-01-1.075874074001014.nc.json
 df_ocean_weather_target.json
 b'KielHoltenauTG'_hourly.json
-
+df_ocean.csv
 
 # Distribution / packaging
 .Python
